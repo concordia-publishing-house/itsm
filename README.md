@@ -1,4 +1,4 @@
-# Itsm
+# ITSM
 
 TODO: Write a gem description
 

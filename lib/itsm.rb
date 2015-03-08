@@ -1,5 +1,5 @@
 require "itsm/version"
 
-module Itsm
+module ITSM
   # Your code goes here...
 end
