@@ -1,5 +1,6 @@
 require "ntlm/http"
 require "savon"
+require "itsm/errors"
 
 module ITSM
   class Issue < Struct.new(:key, :summary, :url, :assigned_to_email, :assigned_to_user)
@@ -29,7 +30,7 @@ module ITSM
       client = Savon.client(wsdl: "http://itsmweb/WebService.asmx?wsdl")
       response = client.call(:submit_incident, message: {userName: username, summary: summary, notes: notes})
       unless response.body[:submit_incident_response][:submit_incident_result][:success]
-        raise response.body
+        raise ITSM::Error, response.body[:submit_incident_response][:submit_incident_result][:return_message]
       end
       issue_id = response.body[:submit_incident_response][:submit_incident_result][:support_call_id]
       client.call(:assign_to_queue, message: {supportCallID: issue_id, queueName: "Emerging Products"})
