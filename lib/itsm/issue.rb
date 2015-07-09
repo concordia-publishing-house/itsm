@@ -3,7 +3,7 @@ require "savon"
 require "itsm/errors"
 
 module ITSM
-  class Issue < Struct.new(:key, :summary, :url, :assigned_to_email, :assigned_to_user)
+  class Issue < Struct.new(:key, :number, :summary, :url, :assigned_to_email, :assigned_to_user)
     
     
     def self.open
@@ -14,6 +14,7 @@ module ITSM
       parse_issues(response.body).map do |issue|
         self.new(
           issue["SupportCallID"],
+          issue["CallNumber"],
           issue["Summary"],
           href_of(issue["CallDetailLink"]),
           issue["AssignedToEmailAddress"].try(:downcase))
