@@ -18,7 +18,7 @@ module ITSM
           issue["Summary"],
           href_of(issue["CallDetailLink"]),
           issue["AssignedToEmailAddress"].try(:downcase),
-          issue["Notes"],
+          issue["Notes"].to_s,
           issue["OpenedByUser"])
       end
     end
