@@ -3,7 +3,7 @@ require "savon"
 require "itsm/errors"
 
 module ITSM
-  class Issue < Struct.new(:key, :number, :summary, :url, :assigned_to_email, :assigned_to_user)
+  class Issue < Struct.new(:key, :number, :summary, :url, :assigned_to_email, :notes, :opened_by)
     
     
     def self.open
@@ -14,12 +14,20 @@ module ITSM
       parse_issues(response.body).map do |issue|
         self.new(
           issue["SupportCallID"],
-          issue["CallNumber"],
+          issue["CallNumber"].to_i,
           issue["Summary"],
           href_of(issue["CallDetailLink"]),
-          issue["AssignedToEmailAddress"].try(:downcase))
+          issue["AssignedToEmailAddress"].try(:downcase),
+          issue["Notes"],
+          issue["OpenedByUser"])
       end
     end
+    
+    def self.find(number)
+      number = number.to_i
+      open.find { |issue| issue.number == number }
+    end
+    
     
     
     def self.create(options={})
@@ -36,6 +44,36 @@ module ITSM
       issue_id = response.body[:submit_incident_response][:submit_incident_result][:support_call_id]
       client.call(:assign_to_queue, message: {supportCallID: issue_id, queueName: "Emerging Products"})
       "http://ecphhelper/Design/ViewITSMCallDetails.aspx?SupportCallID=#{issue_id}"
+    end
+    
+    
+    
+    def close!
+      http = Net::HTTP.start("ecphhelper", 80)
+      req = Net::HTTP::Post.new("/ITSM.asmx/CloseCall", {"Content-Type" => "application/x-www-form-urlencoded"})
+      req.body = "supportCallID=#{key}"
+      req.ntlm_auth("Houston", "cph.pri", "gKfub6mFy9BHDs6")
+      response = http.request(req)
+      
+      response = Hash.from_xml(response.body)
+      unless response.fetch("GenericReturn", {})["Success"] == "true"
+        raise ITSM::Error, response.fetch("GenericReturn", {})["ReturnMessage"]
+      end
+    end
+    
+    def assign_to!(username)
+      username = username.username if username.respond_to? :username
+      
+      http = Net::HTTP.start("ecphhelper", 80)
+      req = Net::HTTP::Post.new("/ITSM.asmx/AssignCall", {"Content-Type" => "application/x-www-form-urlencoded"})
+      req.body = "supportCallID=#{key}&userOrQueueName=#{username}"
+      req.ntlm_auth("Houston", "cph.pri", "gKfub6mFy9BHDs6")
+      response = http.request(req)
+      
+      response = Hash.from_xml(response.body)
+      unless response.fetch("GenericReturn", {})["Success"] == "true"
+        raise ITSM::Error, response.fetch("GenericReturn", {})["ReturnMessage"]
+      end
     end
     
     
