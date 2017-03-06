@@ -50,8 +50,7 @@ module ITSM
 
     def close!
       http = Net::HTTP.start("ecphhelper", 80)
-      req = Net::HTTP::Post.new("/ITSM.asmx/CloseCall", {"Content-Type" => "application/x-www-form-urlencoded"})
-      req.body = "supportCallID=#{key}"
+      req = Net::HTTP::Get.new("/ITSM.asmx/CloseCall?supportCallID=#{key}")
       req.ntlm_auth("Houston", "cph.pri", "gKfub6mFy9BHDs6")
       response = http.request(req)
 
@@ -65,8 +64,7 @@ module ITSM
       username = username.username if username.respond_to? :username
 
       http = Net::HTTP.start("ecphhelper", 80)
-      req = Net::HTTP::Post.new("/ITSM.asmx/AssignCall", {"Content-Type" => "application/x-www-form-urlencoded"})
-      req.body = "supportCallID=#{key}&userOrQueueName=#{username}"
+      req = Net::HTTP::Get.new("/ITSM.asmx/AssignCall?supportCallID=#{key}&userOrQueueName=#{username}")
       req.ntlm_auth("Houston", "cph.pri", "gKfub6mFy9BHDs6")
       response = http.request(req)
 
